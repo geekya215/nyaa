@@ -66,7 +66,7 @@ public class Nyaa {
     try {
       double res = Double.parseDouble(json.substring(start, cursor));
       if (Double.isInfinite(res)) {
-        return Result.NUMBER_TO_BIG;
+        return Result.NUMBER_TOO_BIG;
       } else {
         value.setNumber(res);
         context.setCursor(cursor);

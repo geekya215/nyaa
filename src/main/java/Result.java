@@ -3,5 +3,5 @@ public enum Result {
   EXCEPT_VALUE,
   INVALID_VALUE,
   ROOT_NOT_SINGULAR,
-  NUMBER_TO_BIG
+  NUMBER_TOO_BIG
 }

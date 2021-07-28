@@ -105,7 +105,7 @@ public class OwO {
 
   @Test
   void testNumberTooBig() {
-    testError(Result.NUMBER_TO_BIG, "1e309");
-    testError(Result.NUMBER_TO_BIG, "-1e309");
+    testError(Result.NUMBER_TOO_BIG, "1e309");
+    testError(Result.NUMBER_TOO_BIG, "-1e309");
   }
 }
