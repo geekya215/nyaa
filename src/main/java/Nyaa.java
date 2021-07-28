@@ -21,60 +21,72 @@ public class Nyaa {
     context.setCursor(cursor);
   }
 
-  static Result parseNull(Context context, Value value) {
-    EXCEPT(context, 'n');
-
+  static Result parseLiteral(Context context, Value value, String literal, Type type) {
+    EXCEPT(context, literal.charAt(0));
     int cursor = context.getCursor();
 
-    if (context.getChar(cursor) != 'u' || context.getChar(cursor + 1) != 'l' || context.getChar(cursor + 2) != 'l') {
-      return Result.INVALID_VALUE;
+    int i;
+    for (i = 0; i < literal.length() - 1; ++i) {
+      if (context.getChar(cursor + i) != literal.charAt(i + 1)) {
+        return Result.INVALID_VALUE;
+      }
     }
 
-    context.setCursor(cursor + 3);
-    value.setType(Type.NULL);
-
+    context.setCursor(cursor + i);
+    value.setType(type);
     return Result.OK;
   }
 
-  static Result parseTrue(Context context, Value value) {
-    EXCEPT(context, 't');
-
+  static Result parseNumber(Context context, Value value) {
+    String json = context.getJson();
     int cursor = context.getCursor();
+    int start = cursor;
 
-    if (context.getChar(cursor) != 'r' || context.getChar(cursor + 1) != 'u' || context.getChar(cursor + 2) != 'e') {
-      return Result.INVALID_VALUE;
+    if (context.getChar(cursor) == '-') cursor++;
+    if (context.getChar(cursor) == '0') cursor++;
+    else {
+      char c = context.getChar(cursor);
+      if (!(c >= '1' && c <= '9')) return Result.INVALID_VALUE;
+      for (cursor++; Character.isDigit(context.getChar(cursor)); cursor++) ;
     }
 
-    context.setCursor(cursor + 3);
-    value.setType(Type.TRUE);
-
-    return Result.OK;
-  }
-
-  static Result parseFalse(Context context, Value value) {
-    EXCEPT(context, 'f');
-
-    int cursor = context.getCursor();
-
-    if (context.getChar(cursor) != 'a' || context.getChar(cursor + 1) != 'l' || context.getChar(cursor + 2) != 's' || context.getChar(cursor + 3) != 'e') {
-      return Result.INVALID_VALUE;
+    if (context.getChar(cursor) == '.') {
+      cursor++;
+      if (!Character.isDigit(context.getChar(cursor))) return Result.INVALID_VALUE;
+      for (cursor++; Character.isDigit(context.getChar(cursor)); cursor++) ;
     }
 
-    context.setCursor(cursor + 4);
-    value.setType(Type.FALSE);
+    if (context.getChar(cursor) == 'e' || context.getChar(cursor) == 'E') {
+      cursor++;
+      if (context.getChar(cursor) == '+' || context.getChar(cursor) == '-') cursor++;
+      if (!Character.isDigit(context.getChar(cursor))) return Result.INVALID_VALUE;
+      for (cursor++; Character.isDigit(context.getChar(cursor)); cursor++) ;
+    }
 
-    return Result.OK;
+    try {
+      double res = Double.parseDouble(json.substring(start, cursor));
+      if (Double.isInfinite(res)) {
+        return Result.NUMBER_TO_BIG;
+      } else {
+        value.setNumber(res);
+        context.setCursor(cursor);
+        value.setType(Type.NUMBER);
+        return Result.OK;
+      }
+    } catch (NumberFormatException e) {
+      return Result.INVALID_VALUE;
+    }
   }
 
   static Result parseValue(Context context, Value value) {
     int cursor = context.getCursor();
 
     return switch (context.getChar(cursor)) {
-      case 'n' -> parseNull(context, value);
-      case 't' -> parseTrue(context, value);
-      case 'f' -> parseFalse(context, value);
+      case 'n' -> parseLiteral(context, value, "null", Type.NULL);
+      case 't' -> parseLiteral(context, value, "true", Type.TRUE);
+      case 'f' -> parseLiteral(context, value, "false", Type.FALSE);
+      default -> parseNumber(context, value);
       case '\0' -> Result.EXCEPT_VALUE;
-      default -> Result.INVALID_VALUE;
     };
   }
 
@@ -89,6 +101,7 @@ public class Nyaa {
       parseWhiteSpace(context);
       int cursor = context.getCursor();
       if (context.getChar(cursor) != '\0') {
+        value.setType(Type.NULL);
         result = Result.ROOT_NOT_SINGULAR;
       }
     }
@@ -98,5 +111,10 @@ public class Nyaa {
   static Type getType(Value value) {
     assert value != null;
     return value.getType();
+  }
+
+  static double getNumber(Value value) {
+    assert value != null && value.getType() == Type.NUMBER;
+    return value.getNumber();
   }
 }

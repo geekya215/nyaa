@@ -2,5 +2,6 @@ public enum Result {
   OK,
   EXCEPT_VALUE,
   INVALID_VALUE,
-  ROOT_NOT_SINGULAR
+  ROOT_NOT_SINGULAR,
+  NUMBER_TO_BIG
 }
