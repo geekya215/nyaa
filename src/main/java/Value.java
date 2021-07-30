@@ -1,5 +1,6 @@
 public class Value {
   private double number;
+  private String string;
   private Type type;
 
   public Value(Type type) {
@@ -12,6 +13,14 @@ public class Value {
 
   public void setNumber(double number) {
     this.number = number;
+  }
+
+  public String getString() {
+    return string;
+  }
+
+  public void setString(String string) {
+    this.string = string;
   }
 
   public Type getType() {

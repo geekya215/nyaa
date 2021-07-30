@@ -78,6 +78,47 @@ public class Nyaa {
     }
   }
 
+  static Result parseString(Context context, Value value) {
+    EXCEPT(context, '\"');
+    int cursor = context.getCursor();
+
+    for (;;) {
+      char ch = context.getChar(cursor++);
+      String stack = context.getStack();
+      switch (ch) {
+        case '\"' -> {
+          setString(value, context.getStack());
+          context.setCursor(cursor);
+          return Result.OK;
+        }
+        case '\\' -> {
+          switch (context.getChar(cursor++)) {
+            case '\"' -> context.setStack(stack + '\"');
+            case '\\' -> context.setStack(stack + '\\');
+            case '/' -> context.setStack(stack + '/');
+            case 'b' -> context.setStack(stack + '\b');
+            case 'f' -> context.setStack(stack + '\f');
+            case 'n' -> context.setStack(stack + '\n');
+            case 'r' -> context.setStack(stack + '\r');
+            case 't' -> context.setStack(stack + '\t');
+            default -> {
+              return Result.INVALID_STRING_ESCAPE;
+            }
+          }
+        }
+        case '\0' -> {
+          return Result.MISS_QUOTATION_MARK;
+        }
+        default -> {
+          if (ch < 0x20) {
+            return Result.INVALID_STRING_CHAR;
+          }
+          context.setStack(stack + ch);
+        }
+      }
+    }
+  }
+
   static Result parseValue(Context context, Value value) {
     int cursor = context.getCursor();
 
@@ -86,6 +127,7 @@ public class Nyaa {
       case 't' -> parseLiteral(context, value, "true", Type.TRUE);
       case 'f' -> parseLiteral(context, value, "false", Type.FALSE);
       default -> parseNumber(context, value);
+      case '"' -> parseString(context, value);
       case '\0' -> Result.EXCEPT_VALUE;
     };
   }
@@ -116,5 +158,16 @@ public class Nyaa {
   static double getNumber(Value value) {
     assert value != null && value.getType() == Type.NUMBER;
     return value.getNumber();
+  }
+
+  static void setString(Value value, String string) {
+    assert (value != null && string != null);
+    value.setString(string);
+    value.setType(Type.STRING);
+  }
+
+  static String getString(Value value) {
+    assert value != null;
+    return value.getString();
   }
 }

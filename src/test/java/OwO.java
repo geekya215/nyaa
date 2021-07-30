@@ -1,4 +1,5 @@
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -64,6 +65,20 @@ public class OwO {
     testNumber(-1.7976931348623157e+308, "-1.7976931348623157e+308");
   }
 
+  void testString(String except, String json) {
+    Value value = new Value(Type.NULL);
+    assertEquals(Result.OK, Nyaa.parse(value, json));
+    assertEquals(Type.STRING, Nyaa.getType(value));
+    assertEquals(except, Nyaa.getString(value));
+  }
+
+  @Test
+  void testParseString() {
+    testString("", "\"\"");
+    testString("Hello", "\"Hello\"");
+    testString("Hello\nWorld", "\"Hello\\nWorld\"");
+  }
+
   void testError(Result result, String json) {
     Value value = new Value(Type.FALSE);
     assertEquals(result, Nyaa.parse(value, json));
@@ -104,8 +119,29 @@ public class OwO {
   }
 
   @Test
-  void testNumberTooBig() {
+  void testParseNumberTooBig() {
     testError(Result.NUMBER_TOO_BIG, "1e309");
     testError(Result.NUMBER_TOO_BIG, "-1e309");
   }
+
+  @Test
+  void testParseMissQuotationMark() {
+    testError(Result.MISS_QUOTATION_MARK, "\"");
+    testError(Result.MISS_QUOTATION_MARK, "\"abc");
+  }
+
+  @Test
+  void testParseInvalidStringEscape() {
+    testError(Result.INVALID_STRING_ESCAPE, "\"\\v\"");
+    testError(Result.INVALID_STRING_ESCAPE, "\"\\'\"");
+    testError(Result.INVALID_STRING_ESCAPE, "\"\\0\"");
+    testError(Result.INVALID_STRING_ESCAPE, "\"\\x12\"");
+  }
+
+
+ // @Test
+ // void testParseInvalidStringChar() {
+ //   testError(Result.INVALID_STRING_CHAR, "\"\x01\"");
+ //   testError(Result.INVALID_STRING_CHAR, "\"\x1F\"");
+ // }
 }
