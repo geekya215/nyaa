@@ -1,22 +1,10 @@
-import java.util.Stack;
-
 public class Context {
   private String json;
   private int cursor;
-  private String stack;
-
-  public String getStack() {
-    return stack;
-  }
-
-  public void setStack(String stack) {
-    this.stack = stack;
-  }
 
   public Context(String json) {
     this.json = json;
     this.cursor = 0;
-    this.stack = "";
   }
 
   // to avoid string index out of bounds exception

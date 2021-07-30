@@ -42,24 +42,31 @@ public class Nyaa {
     int cursor = context.getCursor();
     int start = cursor;
 
-    if (context.getChar(cursor) == '-') cursor++;
-    if (context.getChar(cursor) == '0') cursor++;
+    if (context.getChar(cursor) == '-')
+      cursor++;
+    if (context.getChar(cursor) == '0')
+      cursor++;
     else {
       char c = context.getChar(cursor);
-      if (!(c >= '1' && c <= '9')) return Result.INVALID_VALUE;
+      if (!(c >= '1' && c <= '9'))
+        return Result.INVALID_VALUE;
       for (cursor++; Character.isDigit(context.getChar(cursor)); cursor++) ;
     }
 
     if (context.getChar(cursor) == '.') {
       cursor++;
-      if (!Character.isDigit(context.getChar(cursor))) return Result.INVALID_VALUE;
+      if (!Character.isDigit(context.getChar(cursor)))
+        return Result.INVALID_VALUE;
       for (cursor++; Character.isDigit(context.getChar(cursor)); cursor++) ;
     }
 
     if (context.getChar(cursor) == 'e' || context.getChar(cursor) == 'E') {
       cursor++;
-      if (context.getChar(cursor) == '+' || context.getChar(cursor) == '-') cursor++;
-      if (!Character.isDigit(context.getChar(cursor))) return Result.INVALID_VALUE;
+
+      if (context.getChar(cursor) == '+' || context.getChar(cursor) == '-')
+        cursor++;
+      if (!Character.isDigit(context.getChar(cursor)))
+        return Result.INVALID_VALUE;
       for (cursor++; Character.isDigit(context.getChar(cursor)); cursor++) ;
     }
 
@@ -82,25 +89,26 @@ public class Nyaa {
     EXCEPT(context, '\"');
     int cursor = context.getCursor();
 
-    for (;;) {
+    StringBuilder stack = new StringBuilder();
+
+    for (; ; ) {
       char ch = context.getChar(cursor++);
-      String stack = context.getStack();
       switch (ch) {
         case '\"' -> {
-          setString(value, context.getStack());
+          setString(value, stack.toString());
           context.setCursor(cursor);
           return Result.OK;
         }
         case '\\' -> {
           switch (context.getChar(cursor++)) {
-            case '\"' -> context.setStack(stack + '\"');
-            case '\\' -> context.setStack(stack + '\\');
-            case '/' -> context.setStack(stack + '/');
-            case 'b' -> context.setStack(stack + '\b');
-            case 'f' -> context.setStack(stack + '\f');
-            case 'n' -> context.setStack(stack + '\n');
-            case 'r' -> context.setStack(stack + '\r');
-            case 't' -> context.setStack(stack + '\t');
+            case '\"' -> stack.append('\"');
+            case '\\' -> stack.append('\\');
+            case '/' -> stack.append('/');
+            case 'b' -> stack.append('\b');
+            case 'f' -> stack.append('\f');
+            case 'n' -> stack.append('\n');
+            case 'r' -> stack.append('\r');
+            case 't' -> stack.append('\t');
             default -> {
               return Result.INVALID_STRING_ESCAPE;
             }
@@ -113,7 +121,7 @@ public class Nyaa {
           if (ch < 0x20) {
             return Result.INVALID_STRING_CHAR;
           }
-          context.setStack(stack + ch);
+          stack.append(ch);
         }
       }
     }
