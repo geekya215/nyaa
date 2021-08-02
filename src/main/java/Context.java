@@ -16,6 +16,10 @@ public class Context {
     }
   }
 
+  public Character getCharAndIncrement() {
+    return this.getChar(this.cursor++);
+  }
+
   public String getJson() {
     return json;
   }

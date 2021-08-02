@@ -76,6 +76,13 @@ public class OwO {
     testString("", "\"\"");
     testString("Hello", "\"Hello\"");
     testString("Hello\nWorld", "\"Hello\\nWorld\"");
+    testString("Hello\0World", "\"Hello\\u0000World\"");
+    testString("\" \\ / \b \f \n \r \t", "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
+    testString("\u0024", "\"\\u0024\"");         /* Dollar sign U+0024 */
+    testString("\u00C2\u00A2", "\"\\u00A2\"");     /* Cents sign U+00A2 */
+    testString("\u00E2\u0082\u00AC", "\"\\u20AC\""); /* Euro sign U+20AC */
+    testString("\u00F0\u009D\u0084\u009E", "\"\\uD834\\uDD1E\"");  /* G clef sign U+1D11E */
+    testString("\u00F0\u009D\u0084\u009E", "\"\\ud834\\udd1e\"");  /* G clef sign U+1D11E */
   }
 
   void testError(Result result, String json) {
@@ -138,9 +145,35 @@ public class OwO {
   }
 
 
-  // @Test
-  // void testParseInvalidStringChar() {
-  //   testError(Result.INVALID_STRING_CHAR, "\"\x01\"");
-  //   testError(Result.INVALID_STRING_CHAR, "\"\x1F\"");
-  // }
+   @Test
+   void testParseInvalidStringChar() {
+     testError(Result.INVALID_STRING_CHAR, "\"\u0001\"");
+     testError(Result.INVALID_STRING_CHAR, "\"\u001F\"");
+   }
+
+  @Test
+  void testParseInvalidUnicodeHex() {
+    testError(Result.INVALID_UNICODE_HEX, "\"\\u\"");
+    testError(Result.INVALID_UNICODE_HEX, "\"\\u0\"");
+    testError(Result.INVALID_UNICODE_HEX, "\"\\u01\"");
+    testError(Result.INVALID_UNICODE_HEX, "\"\\u012\"");
+    testError(Result.INVALID_UNICODE_HEX, "\"\\u/000\"");
+    testError(Result.INVALID_UNICODE_HEX, "\"\\uG000\"");
+    testError(Result.INVALID_UNICODE_HEX, "\"\\u0/00\"");
+    testError(Result.INVALID_UNICODE_HEX, "\"\\u0G00\"");
+    testError(Result.INVALID_UNICODE_HEX, "\"\\u00/0\"");
+    testError(Result.INVALID_UNICODE_HEX, "\"\\u00G0\"");
+    testError(Result.INVALID_UNICODE_HEX, "\"\\u000/\"");
+    testError(Result.INVALID_UNICODE_HEX, "\"\\u000G\"");
+    testError(Result.INVALID_UNICODE_HEX, "\"\\u 123\"");
+  }
+
+  @Test
+  void testParseInvalidUnicodeSurrogate() {
+    testError(Result.INVALID_UNICODE_SURROGATE, "\"\\uD800\"");
+    testError(Result.INVALID_UNICODE_SURROGATE, "\"\\uDBFF\"");
+    testError(Result.INVALID_UNICODE_SURROGATE, "\"\\uD800\\\\\"");
+    testError(Result.INVALID_UNICODE_SURROGATE, "\"\\uD800\\uDBFF\"");
+    testError(Result.INVALID_UNICODE_SURROGATE, "\"\\uD800\\uE000\"");
+  }
 }

@@ -85,22 +85,52 @@ public class Nyaa {
     }
   }
 
+  static int parseHex4(Context context) throws Exception {
+    int u = 0;
+    for (int i = 0; i < 4; i++) {
+      char ch = context.getCharAndIncrement();
+      u <<= 4;
+      if (ch >= '0' && ch <= '9') u |= ch - '0';
+      else if (ch >= 'A' && ch <= 'F') u |= ch - ('A' - 10);
+      else if (ch >= 'a' && ch <= 'f') u |= ch - ('a' - 10);
+      else throw new Exception();
+    }
+    return u;
+  }
+
+  static void encodeUTF8(StringBuilder c, int u) {
+    if (u <= 0x7F)
+      c.append((char) (u & 0xFF));
+    else if (u <= 0x7FF) {
+      c.append((char) (0xC0 | ((u >> 6) & 0xFF)));
+      c.append((char) (0x80 | (u & 0x3F)));
+    } else if (u <= 0xFFFF) {
+      c.append((char) (0xE0 | ((u >> 12) & 0xFF)));
+      c.append((char) (0x80 | ((u >> 6) & 0x3F)));
+      c.append((char) (0x80 | (u & 0x3F)));
+    } else {
+      assert (u <= 0x10FFFF);
+      c.append((char) (0xF0 | ((u >> 18) & 0xFF)));
+      c.append((char) (0x80 | ((u >> 12) & 0x3F)));
+      c.append((char) (0x80 | ((u >> 6) & 0x3F)));
+      c.append((char) (0x80 | (u & 0x3F)));
+    }
+  }
+
   static Result parseString(Context context, Value value) {
     EXCEPT(context, '\"');
-    int cursor = context.getCursor();
 
     StringBuilder stack = new StringBuilder();
 
     for (; ; ) {
-      char ch = context.getChar(cursor++);
+      char ch = context.getCharAndIncrement();
       switch (ch) {
         case '\"' -> {
           setString(value, stack.toString());
-          context.setCursor(cursor);
           return Result.OK;
         }
         case '\\' -> {
-          switch (context.getChar(cursor++)) {
+          switch (context.getCharAndIncrement()) {
             case '\"' -> stack.append('\"');
             case '\\' -> stack.append('\\');
             case '/' -> stack.append('/');
@@ -109,6 +139,25 @@ public class Nyaa {
             case 'n' -> stack.append('\n');
             case 'r' -> stack.append('\r');
             case 't' -> stack.append('\t');
+            case 'u' -> {
+              int u;
+              try {
+                u = parseHex4(context);
+                if (u >= 0xD800 && u <= 0xDBFF) { /* surrogate pair */
+                  if (context.getCharAndIncrement() != '\\')
+                    return Result.INVALID_UNICODE_SURROGATE;
+                  if (context.getCharAndIncrement() != 'u')
+                    return Result.INVALID_UNICODE_SURROGATE;
+                  int u2 = parseHex4(context);
+                  if (u2 < 0xDC00 || u2 > 0xDFFF)
+                    return Result.INVALID_UNICODE_SURROGATE;
+                  u = (((u - 0xD800) << 10) | (u2 - 0xDC00)) + 0x10000;
+                }
+                encodeUTF8(stack, u);
+              } catch (Exception e) {
+                return Result.INVALID_UNICODE_HEX;
+              }
+            }
             default -> {
               return Result.INVALID_STRING_ESCAPE;
             }
