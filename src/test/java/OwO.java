@@ -85,6 +85,41 @@ public class OwO {
     testString("\u00F0\u009D\u0084\u009E", "\"\\ud834\\udd1e\"");  /* G clef sign U+1D11E */
   }
 
+  @Test
+  void testParseArray() {
+    Value v1 = new Value();
+    assertEquals(Result.OK, Nyaa.parse(v1, "[ ]"));
+    assertEquals(Type.ARRAY, Nyaa.getType(v1));
+    assertEquals(0, Nyaa.getArraySize(v1));
+
+    Value v2 = new Value();
+    assertEquals(Result.OK, Nyaa.parse(v2, "[ null , false , true , 123 , \"abc\" ]"));
+    assertEquals(Type.ARRAY, Nyaa.getType(v2));
+    assertEquals(5, Nyaa.getArraySize(v2));
+    assertEquals(Type.NULL, Nyaa.getType(Nyaa.getArrayElement(v2, 0)));
+    assertEquals(Type.FALSE, Nyaa.getType(Nyaa.getArrayElement(v2, 1)));
+    assertEquals(Type.TRUE, Nyaa.getType(Nyaa.getArrayElement(v2, 2)));
+    assertEquals(Type.NUMBER, Nyaa.getType(Nyaa.getArrayElement(v2, 3)));
+    assertEquals(Type.STRING, Nyaa.getType(Nyaa.getArrayElement(v2, 4)));
+    assertEquals(123.0, Nyaa.getNumber(Nyaa.getArrayElement(v2, 3)));
+    assertEquals("abc", Nyaa.getString(Nyaa.getArrayElement(v2, 4)));
+
+    Value v3 = new Value();
+    assertEquals(Result.OK, Nyaa.parse(v3, "[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]"));
+    assertEquals(Type.ARRAY, Nyaa.getType(v3));
+    assertEquals(4, Nyaa.getArraySize(v3));
+    for (int i = 0; i < 4; i++) {
+      Value v = Nyaa.getArrayElement(v3, i);
+      assertEquals(Type.ARRAY, Nyaa.getType(v));
+      assertEquals(i, Nyaa.getArraySize(v));
+      for (int j = 0; j < i; j++) {
+        Value e = Nyaa.getArrayElement(v, j);
+        assertEquals(Type.NUMBER, Nyaa.getType(e));
+        assertEquals(j, Nyaa.getNumber(e));
+      }
+    }
+  }
+
   void testError(Result result, String json) {
     Value value = new Value(Type.FALSE);
     assertEquals(result, Nyaa.parse(value, json));
@@ -144,12 +179,11 @@ public class OwO {
     testError(Result.INVALID_STRING_ESCAPE, "\"\\x12\"");
   }
 
-
-   @Test
-   void testParseInvalidStringChar() {
-     testError(Result.INVALID_STRING_CHAR, "\"\u0001\"");
-     testError(Result.INVALID_STRING_CHAR, "\"\u001F\"");
-   }
+  @Test
+  void testParseInvalidStringChar() {
+    testError(Result.INVALID_STRING_CHAR, "\"\u0001\"");
+    testError(Result.INVALID_STRING_CHAR, "\"\u001F\"");
+  }
 
   @Test
   void testParseInvalidUnicodeHex() {

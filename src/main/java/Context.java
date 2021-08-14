@@ -16,8 +16,16 @@ public class Context {
     }
   }
 
+  public Character getChar() {
+    return this.getChar(this.cursor);
+  }
+
   public Character getCharAndIncrement() {
     return this.getChar(this.cursor++);
+  }
+
+  public void incrementCursor() {
+    this.cursor++;
   }
 
   public String getJson() {

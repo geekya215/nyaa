@@ -176,6 +176,39 @@ public class Nyaa {
     }
   }
 
+  static Result parseArray(Context context, Value value) {
+    Result result;
+    EXCEPT(context, '[');
+    parseWhiteSpace(context);
+    if (context.getChar() == ']') {
+      value.setType(Type.ARRAY);
+      context.incrementCursor();
+      return Result.OK;
+    }
+
+    for (; ; ) {
+      Value v = new Value();
+      if ((result = parseValue(context, v)) != Result.OK) {
+        break;
+      }
+      value.getValues().add(v);
+      parseWhiteSpace(context);
+
+      if (context.getChar() == ',') {
+        context.incrementCursor();
+        parseWhiteSpace(context);
+      } else if (context.getChar() == ']') {
+        value.setType(Type.ARRAY);
+        context.incrementCursor();
+        return Result.OK;
+      } else {
+        result = Result.MISS_COMMA_OR_SQUARE_BRACKET;
+        break;
+      }
+    }
+    return result;
+  }
+
   static Result parseValue(Context context, Value value) {
     int cursor = context.getCursor();
 
@@ -185,6 +218,7 @@ public class Nyaa {
       case 'f' -> parseLiteral(context, value, "false", Type.FALSE);
       default -> parseNumber(context, value);
       case '"' -> parseString(context, value);
+      case '[' -> parseArray(context, value);
       case '\0' -> Result.EXCEPT_VALUE;
     };
   }
@@ -226,5 +260,16 @@ public class Nyaa {
   static String getString(Value value) {
     assert value != null;
     return value.getString();
+  }
+
+  static int getArraySize(Value value) {
+    assert value != null && value.getType() == Type.ARRAY;
+    return value.getValues().size();
+  }
+
+  static Value getArrayElement(Value value, int index) {
+    assert value != null && value.getType() == Type.ARRAY;
+    assert index < value.getValues().size();
+    return value.getValues().get(index);
   }
 }

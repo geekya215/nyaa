@@ -1,10 +1,26 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class Value {
+  private List<Value> values = new ArrayList<>();
   private double number;
   private String string;
   private Type type;
 
   public Value(Type type) {
     this.type = type;
+  }
+
+  public Value() {
+    this.type = Type.NULL;
+  }
+
+  public List<Value> getValues() {
+    return values;
+  }
+
+  public void setValues(List<Value> values) {
+    this.values = values;
   }
 
   public double getNumber() {
