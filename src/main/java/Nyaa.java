@@ -209,6 +209,65 @@ public class Nyaa {
     return result;
   }
 
+  static Result parseObject(Context context, Value value) {
+    Result result;
+    EXCEPT(context, '{');
+    parseWhiteSpace(context);
+    if (context.getChar() == '}') {
+      context.incrementCursor();
+      value.setType(Type.OBJECT);
+      return Result.OK;
+    }
+
+    for (; ; ) {
+      Pair pair = new Pair();
+
+      // parse key
+      if (context.getChar() != '"') {
+        result = Result.MISS_KEY;
+        break;
+      }
+
+      if ((result = parseString(context, value)) != Result.OK) {
+        break;
+      }
+
+      String key = getString(value);
+      pair.setKey(key);
+
+      parseWhiteSpace(context);
+
+      if (context.getChar() != ':') {
+        result = Result.MISS_COLON;
+        break;
+      }
+
+      context.incrementCursor();
+      parseWhiteSpace(context);
+
+      // parse value
+      if ((result = parseValue(context, pair.getValue())) != Result.OK) {
+        break;
+      }
+      value.getPairs().add(pair);
+
+      parseWhiteSpace(context);
+      if (context.getChar() == ',') {
+        context.incrementCursor();
+        parseWhiteSpace(context);
+      } else if (context.getChar() == '}') {
+        context.incrementCursor();
+        value.setType(Type.OBJECT);
+        return Result.OK;
+      } else {
+        result = Result.MISS_COMMA_OR_CURLY_BRACKET;
+        break;
+      }
+
+    }
+    return result;
+  }
+
   static Result parseValue(Context context, Value value) {
     int cursor = context.getCursor();
 
@@ -219,6 +278,7 @@ public class Nyaa {
       default -> parseNumber(context, value);
       case '"' -> parseString(context, value);
       case '[' -> parseArray(context, value);
+      case '{' -> parseObject(context, value);
       case '\0' -> Result.EXCEPT_VALUE;
     };
   }
@@ -271,5 +331,22 @@ public class Nyaa {
     assert value != null && value.getType() == Type.ARRAY;
     assert index < value.getValues().size();
     return value.getValues().get(index);
+  }
+
+  static int getObjectSize(Value value) {
+    assert value != null && value.getType() == Type.OBJECT;
+    return value.getPairs().size();
+  }
+
+  static String getObjectKey(Value value, int index) {
+    assert value != null && value.getType() == Type.OBJECT;
+    assert index < value.getPairs().size();
+    return value.getPairs().get(index).getKey();
+  }
+
+  static Value getObjectValue(Value value, int index) {
+    assert value != null && value.getType() == Type.OBJECT;
+    assert index < value.getPairs().size();
+    return value.getPairs().get(index).getValue();
   }
 }

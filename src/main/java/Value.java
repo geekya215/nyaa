@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Value {
+  private List<Pair> pairs = new ArrayList<>();
   private List<Value> values = new ArrayList<>();
   private double number;
   private String string;
@@ -13,6 +14,14 @@ public class Value {
 
   public Value() {
     this.type = Type.NULL;
+  }
+
+  public List<Pair> getPairs() {
+    return pairs;
+  }
+
+  public void setPairs(List<Pair> pairs) {
+    this.pairs = pairs;
   }
 
   public List<Value> getValues() {

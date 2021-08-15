@@ -120,6 +120,59 @@ public class OwO {
     }
   }
 
+  @Test
+  void testParseObject() {
+    Value v1 = new Value();
+    assertEquals(Result.OK, Nyaa.parse(v1, " { } "));
+    assertEquals(Type.OBJECT, Nyaa.getType(v1));
+    assertEquals(0, Nyaa.getObjectSize(v1));
+
+    Value v2 = new Value();
+    assertEquals(Result.OK, Nyaa.parse(v2,
+      " { " +
+        "\"n\" : null , " +
+        "\"f\" : false , " +
+        "\"t\" : true , " +
+        "\"i\" : 123 , " +
+        "\"s\" : \"abc\", " +
+        "\"a\" : [ 1, 2, 3 ]," +
+        "\"o\" : { \"1\" : 1, \"2\" : 2, \"3\" : 3 }" +
+        " } "
+    ));
+    assertEquals(Type.OBJECT, Nyaa.getType(v2));
+    assertEquals(7, Nyaa.getObjectSize(v2));
+    assertEquals("n", Nyaa.getObjectKey(v2, 0));
+    assertEquals(Type.NULL, Nyaa.getType(Nyaa.getObjectValue(v2, 0)));
+    assertEquals("f", Nyaa.getObjectKey(v2, 1));
+    assertEquals(Type.FALSE, Nyaa.getType(Nyaa.getObjectValue(v2, 1)));
+    assertEquals("t", Nyaa.getObjectKey(v2, 2));
+    assertEquals(Type.TRUE, Nyaa.getType(Nyaa.getObjectValue(v2, 2)));
+    assertEquals("i", Nyaa.getObjectKey(v2, 3));
+    assertEquals(Type.NUMBER, Nyaa.getType(Nyaa.getObjectValue(v2, 3)));
+    assertEquals("s", Nyaa.getObjectKey(v2, 4));
+    assertEquals(Type.STRING, Nyaa.getType(Nyaa.getObjectValue(v2, 4)));
+    assertEquals("a", Nyaa.getObjectKey(v2, 5));
+    assertEquals(Type.ARRAY, Nyaa.getType(Nyaa.getObjectValue(v2, 5)));
+
+    Value v = Nyaa.getObjectValue(v2, 5);
+    for (int i = 0; i < 3; i++) {
+      Value e = Nyaa.getArrayElement(v, i);
+      assertEquals(Type.NUMBER, Nyaa.getType(e));
+      assertEquals(i + 1.0, Nyaa.getNumber(e));
+    }
+
+    assertEquals("o", Nyaa.getObjectKey(v2, 6));
+    Value o = Nyaa.getObjectValue(v2, 6);
+    assertEquals(Type.OBJECT, Nyaa.getType(o));
+    assertEquals(3, Nyaa.getObjectSize(o));
+    for (int i = 0; i < 3; i++) {
+      Value ov = Nyaa.getObjectValue(o, i);
+      assertEquals(String.valueOf(i + 1), Nyaa.getObjectKey(o, i));
+      assertEquals(Type.NUMBER, Nyaa.getType(ov));
+      assertEquals(i + 1, Nyaa.getNumber(ov));
+    }
+  }
+
   void testError(Result result, String json) {
     Value value = new Value(Type.FALSE);
     assertEquals(result, Nyaa.parse(value, json));
