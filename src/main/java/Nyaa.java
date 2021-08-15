@@ -265,6 +265,7 @@ public class Nyaa {
       }
 
     }
+    value.setType(Type.NULL);
     return result;
   }
 

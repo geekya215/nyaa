@@ -263,4 +263,38 @@ public class OwO {
     testError(Result.INVALID_UNICODE_SURROGATE, "\"\\uD800\\uDBFF\"");
     testError(Result.INVALID_UNICODE_SURROGATE, "\"\\uD800\\uE000\"");
   }
+
+  @Test
+  void testParseMissCommaOrSquareBracket() {
+    testError(Result.MISS_COMMA_OR_SQUARE_BRACKET, "[1");
+    testError(Result.MISS_COMMA_OR_SQUARE_BRACKET, "[1}");
+    testError(Result.MISS_COMMA_OR_SQUARE_BRACKET, "[1 2");
+    testError(Result.MISS_COMMA_OR_SQUARE_BRACKET, "[[]");
+  }
+
+  @Test
+  void testParseMissKey() {
+    testError(Result.MISS_KEY, "{:1,");
+    testError(Result.MISS_KEY, "{1:1,");
+    testError(Result.MISS_KEY, "{true:1,");
+    testError(Result.MISS_KEY, "{false:1,");
+    testError(Result.MISS_KEY, "{null:1,");
+    testError(Result.MISS_KEY, "{[]:1,");
+    testError(Result.MISS_KEY, "{{}:1,");
+    testError(Result.MISS_KEY, "{\"a\":1,");
+  }
+
+  @Test
+  void testParseMissColon() {
+    testError(Result.MISS_COLON, "{\"a\"}");
+    testError(Result.MISS_COLON, "{\"a\",\"b\"}");
+  }
+
+  @Test
+  void testParseMissCommaOrCurlyBracket() {
+    testError(Result.MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":1");
+    testError(Result.MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":1]");
+    testError(Result.MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":1 \"b\"");
+    testError(Result.MISS_COMMA_OR_CURLY_BRACKET, "{\"a\":{}");
+  }
 }
